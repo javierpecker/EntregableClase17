@@ -1,15 +1,18 @@
 import express from 'express';
 import path from 'path';
-import routerRead from './routes/rutas.js';
+import moment from "moment";
 import handlebars from 'express-handlebars';
 import * as http from 'http';
 import io from 'socket.io';
 import fs from "fs";
-import moment from "moment";
+import routerRead from './routes/rutas';
+import { DBService } from './services/db';
+
 
 const app = express();
 const puerto = 8080;
 const server = http.Server(app)
+DBService.init();
 
 server.listen(puerto, () =>
   console.log('Server up en puerto', puerto)

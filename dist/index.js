@@ -6,13 +6,19 @@ var _express = _interopRequireDefault(require("express"));
 
 var _path = _interopRequireDefault(require("path"));
 
-var _rutas = _interopRequireDefault(require("./routes/rutas.js"));
+var _moment = _interopRequireDefault(require("moment"));
 
 var _expressHandlebars = _interopRequireDefault(require("express-handlebars"));
 
 var http = _interopRequireWildcard(require("http"));
 
 var _socket = _interopRequireDefault(require("socket.io"));
+
+var _fs = _interopRequireDefault(require("fs"));
+
+var _rutas = _interopRequireDefault(require("./routes/rutas"));
+
+var _db = require("./services/db");
 
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 
@@ -23,6 +29,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "d
 var app = (0, _express["default"])();
 var puerto = 8080;
 var server = http.Server(app);
+
+_db.DBService.init();
+
 server.listen(puerto, function () {
   return console.log('Server up en puerto', puerto);
 });
@@ -52,12 +61,42 @@ app.use(_express["default"].urlencoded({
   extended: true
 }));
 app.use('/api', _rutas["default"]);
-var productos = [];
-var myWSServer = (0, _socket["default"])(server); // myWSServer.on("connection", (socket) => {
-//   console.log("Se conecto un cliente");
-//   myWSServer.emit("messages", productos);
-// });
 
+var readfile = function readfile() {
+  var filenames = _fs["default"].readdirSync("./persistentdata");
+
+  var found = filenames.find(function (element) {
+    return "messages.txt" === element;
+  });
+
+  if (found === "messages.txt") {
+    var data = _fs["default"].readFileSync("./persistentdata/messages.txt", "utf-8");
+
+    return data;
+  } else {
+    console.log("Archivo no leido");
+  }
+};
+
+var guardarMessages = function guardarMessages(messages) {
+  _fs["default"].writeFileSync("./persistentdata/messages.txt", JSON.stringify(messages, undefined, 2), "utf-8");
+};
+
+var guardarNewMessage = function guardarNewMessage(data) {
+  var messages = JSON.parse(readfile());
+  var now = new Date();
+  var date = (0, _moment["default"])(now).format("DD/MM/YYYY HH:MM:SS");
+  var newMessage = {
+    email: data.email,
+    fecha: date,
+    mensaje: data.mensaje
+  };
+  messages.push(newMessage);
+  guardarMessages(messages);
+};
+
+var productos = [];
+var myWSServer = (0, _socket["default"])(server);
 myWSServer.on('connection', function (socket) {
   console.log('\n\nUn cliente se ha conectado');
   console.log("ID DEL SOCKET DEL CLIENTE => ".concat(socket.client.id));
@@ -67,8 +106,14 @@ myWSServer.on('connection', function (socket) {
     socket.emit('messages', productos);
   });
   socket.on('askData', function (data) {
-    console.log(productos);
-    console.log('ME LLEGO DATA');
+    var chatfile = readfile();
     socket.emit('messages', productos);
+    socket.emit('message', chatfile);
+  });
+  socket.on("chatMessage", function (chat) {
+    guardarNewMessage(chat);
+    var chatfile = readfile();
+    socket.emit("message", chatfile);
+    socket.broadcast.emit("message", chatfile);
   });
 });

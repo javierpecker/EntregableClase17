@@ -52,10 +52,11 @@ router.post('/productos/guardar', function (req, res) {
     return res.status(400).json({
       msg: 'Necesito en el body title, price and thumbnail'
     });
-  } // res.json({
-  //   producto,
-  // });
+  }
 
+  res.json({
+    producto: producto
+  });
 });
 router.put('/productos/actualizar/:id', function (req, res) {
   var id = parseInt(req.params.id);
