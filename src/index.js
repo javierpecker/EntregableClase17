@@ -4,7 +4,6 @@ import moment from "moment";
 import handlebars from 'express-handlebars';
 import * as http from 'http';
 import io from 'socket.io';
-import fs from "fs";
 import routerRead from './routes/rutas';
 import { DBService } from './services/db';
 
@@ -45,28 +44,10 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/api', routerRead);
 
-const readfile = () => {
-  let filenames = fs.readdirSync("./persistentdata");
-  const found = filenames.find((element) => "messages.txt" === element);
-  if (found === "messages.txt") {
-    const data = fs.readFileSync("./persistentdata/messages.txt", "utf-8");
-    return data;
-  } else {
-    console.log("Archivo no leido");
-  }
-};
-
-const guardarMessages = (messages) => {
-  fs.writeFileSync(
-    "./persistentdata/messages.txt",
-    JSON.stringify(messages, undefined, 2),
-    "utf-8"
-  );
-};
 
 
 const guardarNewMessage = (data) => {
-  console.log(data)
+  //console.log(data);
   let now = new Date();
   let date = moment(now).format("DD/MM/YYYY HH:MM:SS");
   const newMessage = { email: data.email, createdAt: date, mensaje: data.mensaje };
@@ -89,20 +70,21 @@ myWSServer.on('connection', (socket) => {
   });
 
   socket.on('askData', (data) => {
-    const chatfile = DBService.get();
-    socket.emit('messages', productos);
-    socket.emit('message', chatfile);
+    //const chatfile = DBService.get();
+    DBService.get().then(chatfile => {
+      socket.emit('messages', productos);
+      socket.emit('message', chatfile);
+    });
+    
 
   });
 
   socket.on("chatMessage", (chat) => {
     guardarNewMessage(chat);
-    console.log(DBService.get())
-    //const chatfile = 
-    DBService.get().then((chatfile) =>{
-    console.log("imprimo el chat", chatfile)
-    socket.emit("message", chatfile);
-    socket.broadcast.emit("message", chatfile);
-    });
+    DBService.get().then(chatfile => {
+      //console.log(chatfile)
+      socket.emit('message', chatfile);
+      //socket.broadcast.emit("message", chatfile);
+    });  
   });
 });

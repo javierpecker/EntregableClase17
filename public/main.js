@@ -1,5 +1,5 @@
 
-const socket = io.connect();
+const socket = io.connect("http://localhost:8080", { forceNew: true });
 
 socket.emit('askData');
 
@@ -31,9 +31,8 @@ function render(data) {
 }
 
 socket.on("message", (chat) => {
-  let chatparse = JSON.parse(chat);
-  console.log(chatparse);
-  const html = chatparse
+  console.log("emitiendo");
+  const html = chat
     .map((mensaje) => {
       return `<div>
                  <div class="">${mensaje.createdAt} ${mensaje.email} dice: </div>
@@ -44,6 +43,7 @@ socket.on("message", (chat) => {
     })
     .join(" ");
   document.getElementById("chat").innerHTML = html;
+  console.log(html)
 });
 
 const chatForm = document.getElementById("chatform");

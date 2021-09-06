@@ -38,8 +38,8 @@ class DB {
     }
 
     async create(data) {
-        console.log(data)
-        return await this.connection("mensajes").insert(data);
+        //console.log(data);
+        return this.connection("mensajes").insert(data);
     }
 
     async get(tableName, id) {
