@@ -14,6 +14,7 @@ const puerto = 8080;
 const server = http.Server(app)
 DBService.init();
 
+
 server.listen(puerto, () =>
   console.log('Server up en puerto', puerto)
 );
@@ -65,12 +66,11 @@ const guardarMessages = (messages) => {
 
 
 const guardarNewMessage = (data) => {
-  let messages = JSON.parse(readfile());
+  console.log(data)
   let now = new Date();
   let date = moment(now).format("DD/MM/YYYY HH:MM:SS");
-  const newMessage = { email: data.email, fecha: date, mensaje: data.mensaje };
-  messages.push(newMessage);
-  guardarMessages(messages);
+  const newMessage = { email: data.email, createdAt: date, mensaje: data.mensaje };
+  DBService.create(newMessage);
 };
 
 const productos = [];
@@ -89,7 +89,7 @@ myWSServer.on('connection', (socket) => {
   });
 
   socket.on('askData', (data) => {
-    const chatfile = readfile();
+    const chatfile = DBService.get();
     socket.emit('messages', productos);
     socket.emit('message', chatfile);
 
@@ -97,8 +97,12 @@ myWSServer.on('connection', (socket) => {
 
   socket.on("chatMessage", (chat) => {
     guardarNewMessage(chat);
-    const chatfile = readfile();
+    console.log(DBService.get())
+    //const chatfile = 
+    DBService.get().then((chatfile) =>{
+    console.log("imprimo el chat", chatfile)
     socket.emit("message", chatfile);
     socket.broadcast.emit("message", chatfile);
+    });
   });
 });

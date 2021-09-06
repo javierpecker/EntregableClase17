@@ -36,7 +36,7 @@ socket.on("message", (chat) => {
   const html = chatparse
     .map((mensaje) => {
       return `<div>
-                 <div class="">${mensaje.fecha} ${mensaje.email} dice: </div>
+                 <div class="">${mensaje.createdAt} ${mensaje.email} dice: </div>
                  <div class="">${mensaje.mensaje}</div>
                  <div class="">---------------------- </div>
                  <div class="">---------------------- </div>
